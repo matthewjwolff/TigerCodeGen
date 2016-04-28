@@ -60,14 +60,32 @@ public class Codegen {
       throw new Error("Codegen.munchStm");
   }
 
+  //TODO: can be improved
   void munchStm(Tree.MOVE s) {
+      //are we loading or storing
+      if(s.dst instanceof Tree.MEM) {
+         Tree.MEM dst = (Tree.MEM)s.dst;
+         Temp dstReg = munchExp(dst);
+         emit(OPER("sw (`d0) `s0", L(dstReg), L(munchExp(s.src))));
+      } else if (s.src instanceof Tree.MEM) {
+         Temp srcReg = munchExp(s.src);
+         emit(OPER("lw `d0 (`s0)", L(munchExp(s.dst)), L(srcReg)));
+      } else System.err.println("unexpected arguments of MOVE instruction");
   }
 
   void munchStm(Tree.EXP s) {
     munchExp(s.exp);
   }
 
+  //TODO
   void munchStm(Tree.JUMP s) {
+      //jump to label (if label is passed in
+      if(s.exp instanceof Tree.NAME) {
+          //b = unconditional BRANCH
+          emit(OPER("b " + ((Tree.NAME)s.exp).label.toString(), null, null, s.targets));
+      }
+      //JUMP to REGISTER (source 0)
+      emit(OPER("jr `s0", null, L(munchExp(s.exp)), s.targets));
   }
 
   private static String[] CJUMP = new String[10];
@@ -84,10 +102,15 @@ public class Codegen {
     CJUMP[Tree.CJUMP.UGE] = "bgeu";
   }
 
+  //TODO
   void munchStm(Tree.CJUMP s) {
+      //need to add const handling
+      //jump operator two comparisons, temporaries holding comparison operators, true label, false label
+      emit(OPER(CJUMP[s.relop] + " 's0 's1 " + s.iftrue.toString(), null, L(munchExp(s.left), L(munchExp(s.right))), new LabelList(s.iftrue, new LabelList(s.iffalse, null))));
   }
 
   void munchStm(Tree.LABEL l) {
+      emit(new Assem.LABEL(l.label.toString() + ":", l.label));
   }
 
   Temp munchExp(Tree.Exp s) {
@@ -108,13 +131,23 @@ public class Codegen {
   }
 
   Temp munchExp(Tree.CONST e) {
-    return frame.ZERO;
+      //MIPS has a reserved register for 0
+      if(e.value == 0)
+        return frame.ZERO;
+      //load the CONST into a new temporary, return that temporary
+      Temp temp = new Temp();
+      emit(OPER("li 'd0 "+e.value, L(temp), null));
+      return temp;
   }
 
+  //"the symbolic constant n (corresponding to an assembly language label"
+  //a label is just an address in program memory, load that address
   Temp munchExp(Tree.NAME e) {
-    return frame.ZERO;
+      Temp temp = new Temp();
+      emit(OPER("la 'd0 "+e.label.toString(), L(temp), null));
+    return temp;
   }
-
+  
   Temp munchExp(Tree.TEMP e) {
     if (e.temp == frame.FP) {
       Temp t = new Temp();
@@ -150,18 +183,37 @@ public class Codegen {
     return shift;
   }
 
+  //TODO - real implementation
   Temp munchExp(Tree.BINOP e) {
-    return frame.ZERO;
+      //simple version
+      //i mean it works right?
+      Temp temp = munchExp(e.left);
+      emit(OPER(BINOP[e.binop]+" `d0 `s0", L(temp), L(munchExp(e.right))));
+    return temp;
   }
 
+  //Calculate memory address, store/load handled elsewhere
   Temp munchExp(Tree.MEM e) {
-    return frame.ZERO;
+    return munchExp(e.exp);
   }
 
+  //TODO
   Temp munchExp(Tree.CALL s) {
-    return frame.ZERO;
+      //if we're calling a NAME'd function
+      TempList args = munchArgs(0, s.args);
+      if(s.func instanceof Tree.NAME) {
+          //jump to function definition, all callersaved registers are trashed, args registers are passed in
+          emit(OPER("ja1 "+((Tree.NAME)s.func).label.toString(),frame.callerSaves,args));
+      }
+      else {
+          //jump to instruction given by function, assume all caller-saved registers are trashed, passing parameters args
+          emit(OPER("ja1 `d0 `s0", frame.callerSaves, L(munchExp(s.func), args)));
+      }
+    //hardwired address for the return value of a functions
+    return frame.RV();
   }
 
+  //more?
   private TempList munchArgs(int i, Tree.ExpList args) {
     if (args == null)
       return null;
