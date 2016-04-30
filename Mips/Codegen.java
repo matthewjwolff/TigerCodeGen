@@ -207,11 +207,11 @@ public class Codegen {
       TempList args = munchArgs(0, s.args);
       if(s.func instanceof Tree.NAME) {
           //jump to function definition, all callersaved registers are trashed, args registers are passed in
-          emit(OPER("ja1 "+((Tree.NAME)s.func).label.toString(),frame.callerSaves,args));
+          emit(OPER("jal "+((Tree.NAME)s.func).label.toString(),frame.callerSaves,args));
       }
       else {
           //jump to instruction given by function, assume all caller-saved registers are trashed, passing parameters args
-          emit(OPER("ja1 `d0 `s0", frame.callerSaves, L(munchExp(s.func), args)));
+          emit(OPER("jal `d0 `s0", frame.callerSaves, L(munchExp(s.func), args)));
       }
     //hardwired address for the return value of a functions
     return frame.RV();
