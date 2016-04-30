@@ -63,7 +63,6 @@ public class Codegen {
   //TODO: can be improved
   void munchStm(Tree.MOVE s) {
       //are we loading or storing
-      System.out.println("munch move");
       if(s.dst instanceof Tree.MEM) {
          Tree.MEM dst = (Tree.MEM)s.dst;
          Temp dstReg = munchExp(dst);
@@ -73,7 +72,9 @@ public class Codegen {
          emit(OPER("lw `d0 (`s0)", L(munchExp(s.dst)), L(srcReg)));
       } else {
           //not moving memory
-        emit(OPER("lw `d0 `s0", L(munchExp(s.dst)), L(munchExp(s.src))));
+          TempList dst = L(munchExp(s.dst));
+          TempList src = L(munchExp(s.src));
+        emit(OPER("move `d0 `s0", dst, src));
       }
   }
 
