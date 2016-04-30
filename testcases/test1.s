@@ -1,37 +1,64 @@
-	.text
-tigermain:
-tigermain_framesize=44
-	subu $sp tigermain_framesize
+PROCEDURE tigermain
+# Before canonicalization: 
+MOVE(
+ TEMP $v0,
+ ESEQ(
+  MOVE(
+   TEMP t33,
+   CALL(
+    NAME _initArray,
+     CONST 10,
+     CONST 0)),
+  TEMP t33))
+# After canonicalization: 
+MOVE(
+ TEMP t33,
+ CALL(
+  NAME _initArray,
+   CONST 10,
+   CONST 0))
+MOVE(
+ TEMP $v0,
+ TEMP t33)
+# Basic Blocks: 
+#
+LABEL L1
+MOVE(
+ TEMP t33,
+ CALL(
+  NAME _initArray,
+   CONST 10,
+   CONST 0))
+MOVE(
+ TEMP $v0,
+ TEMP t33)
+JUMP(
+ NAME L0)
+LABEL L0
+# Trace Scheduled: 
+LABEL L1
+MOVE(
+ TEMP t33,
+ CALL(
+  NAME _initArray,
+   CONST 10,
+   CONST 0))
+MOVE(
+ TEMP $v0,
+ TEMP t33)
+JUMP(
+ NAME L0)
+LABEL L0
+# Instructions: 
 L1:
-	sw $ra -4+tigermain_framesize($sp)
-	sw $s0 -8+tigermain_framesize($sp)
-	sw $s1 -12+tigermain_framesize($sp)
-	sw $s2 -16+tigermain_framesize($sp)
-	sw $s3 -20+tigermain_framesize($sp)
-	sw $s4 -24+tigermain_framesize($sp)
-	sw $s5 -28+tigermain_framesize($sp)
-	sw $s6 -32+tigermain_framesize($sp)
-	sw $s7 -36+tigermain_framesize($sp)
-	sw $s8 -40+tigermain_framesize($sp)
-	sw $a0 0+tigermain_framesize($sp)
-	li $v0 10
-	move $a0 $v0
+	li t34 10
+	move $a0 t34
 	move $a1 $0
 	jal _initArray
-
-
-	lw $s8 -40+tigermain_framesize($sp)
-	lw $s7 -36+tigermain_framesize($sp)
-	lw $s6 -32+tigermain_framesize($sp)
-	lw $s5 -28+tigermain_framesize($sp)
-	lw $s4 -24+tigermain_framesize($sp)
-	lw $s3 -20+tigermain_framesize($sp)
-	lw $s2 -16+tigermain_framesize($sp)
-	lw $s1 -12+tigermain_framesize($sp)
-	lw $s0 -8+tigermain_framesize($sp)
-	lw $ra -4+tigermain_framesize($sp)
+	lw t33 $v0
+	lw $v0 t33
 	b L0
+	la t35 L0
+	jr t35
 L0:
-
-	addu $sp tigermain_framesize
-	j $ra
+END tigermain
