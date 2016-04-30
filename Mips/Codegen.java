@@ -63,6 +63,7 @@ public class Codegen {
   //TODO: can be improved
   void munchStm(Tree.MOVE s) {
       //are we loading or storing
+      System.out.println("munch move");
       if(s.dst instanceof Tree.MEM) {
          Tree.MEM dst = (Tree.MEM)s.dst;
          Temp dstReg = munchExp(dst);
@@ -70,7 +71,10 @@ public class Codegen {
       } else if (s.src instanceof Tree.MEM) {
          Temp srcReg = munchExp(s.src);
          emit(OPER("lw `d0 (`s0)", L(munchExp(s.dst)), L(srcReg)));
-      } else System.err.println("unexpected arguments of MOVE instruction");
+      } else {
+          //not moving memory
+        emit(OPER("lw `d0 `s0", L(munchExp(s.dst)), L(munchExp(s.src))));
+      }
   }
 
   void munchStm(Tree.EXP s) {
@@ -106,7 +110,7 @@ public class Codegen {
   void munchStm(Tree.CJUMP s) {
       //need to add const handling
       //jump operator two comparisons, temporaries holding comparison operators, true label, false label
-      emit(OPER(CJUMP[s.relop] + " 's0 's1 " + s.iftrue.toString(), null, L(munchExp(s.left), L(munchExp(s.right))), new LabelList(s.iftrue, new LabelList(s.iffalse, null))));
+      emit(OPER(CJUMP[s.relop] + " `s0 `s1 " + s.iftrue.toString(), null, L(munchExp(s.left), L(munchExp(s.right))), new LabelList(s.iftrue, new LabelList(s.iffalse, null))));
   }
 
   void munchStm(Tree.LABEL l) {
@@ -136,7 +140,7 @@ public class Codegen {
         return frame.ZERO;
       //load the CONST into a new temporary, return that temporary
       Temp temp = new Temp();
-      emit(OPER("li 'd0 "+e.value, L(temp), null));
+      emit(OPER("li `d0 "+e.value, L(temp), null));
       return temp;
   }
 
@@ -144,7 +148,7 @@ public class Codegen {
   //a label is just an address in program memory, load that address
   Temp munchExp(Tree.NAME e) {
       Temp temp = new Temp();
-      emit(OPER("la 'd0 "+e.label.toString(), L(temp), null));
+      emit(OPER("la `d0 "+e.label.toString(), L(temp), null));
     return temp;
   }
   

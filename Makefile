@@ -1,2 +1,2 @@
-Main/Main.class : Main/Main.java
+Mips/Codegen.class : Mips/Codegen.java
 	javac -g */*.java
